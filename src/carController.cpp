@@ -24,36 +24,40 @@ void CarController::run() {
 #else
     while (True) {
 #endif
-        const rs2::frameset data = pipe.wait_for_frames(); // Wait for next set of frames from the camera
+        try {
+            const rs2::frameset data = pipe.wait_for_frames(500); // Wait for next set of frames from the camera
 
-        const rs2::frame depth = data.get_depth_frame().apply_filter(color_map);
-        const rs2::depth_frame depth_raw = data.get_depth_frame();
-        const rs2::frame color = data.get_color_frame();
-        const Mat color_image(Size(FRAME_WIDTH, FRAME_HEIGHT), CV_8UC3, (void*)color.get_data(), Mat::AUTO_STEP);
-        const Mat depth_image(Size(FRAME_WIDTH, FRAME_HEIGHT), CV_8UC3, (void*)depth.get_data(), Mat::AUTO_STEP);
+            const rs2::frame depth = data.get_depth_frame().apply_filter(color_map);
+            const rs2::depth_frame depth_raw = data.get_depth_frame();
+            const rs2::frame color = data.get_color_frame();
+            const Mat color_image(Size(FRAME_WIDTH, FRAME_HEIGHT), CV_8UC3, (void*)color.get_data(), Mat::AUTO_STEP);
+            const Mat depth_image(Size(FRAME_WIDTH, FRAME_HEIGHT), CV_8UC3, (void*)depth.get_data(), Mat::AUTO_STEP);
 
-        const auto result = detectFeatures(color_image);
-        const std::vector<KeyPoint> inputKey = result.first;
-        const std::vector<std::vector<DMatch>> matches = result.second;
+            const auto result = detectFeatures(color_image);
+            const std::vector<KeyPoint> inputKey = result.first;
+            const std::vector<std::vector<DMatch>> matches = result.second;
 
-        Mat dest = depth_image;
-        switch (state) {
-            case State::RUNNING:
-            case State::STOP:
-                running(depth_raw);
-                break;
-            case State::TRACKING:
-                tracking(dest, inputKey, matches);
-                break;
-        }
-#ifdef GUITEST
+            Mat dest = depth_image;
+            switch (state) {
+                case State::RUNNING:
+                case State::STOP:
+                    running(depth_raw);
+                    break;
+                case State::TRACKING:
+                    tracking(dest, inputKey, matches);
+                    break;
+            }
             drawMeasurementPoints(dest, depth_raw);
+#ifdef GUITEST
             //drawMatches(this->target, this->targetKey, color_image, inputKey, matches, dest);
-
             imshow(window_name, dest);
 #endif
             video.write(dest);
+        } catch (rs2::error e) {
+            std::cout << e.get_failed_args() << std::endl;
+            break;
         }
+    }
 }
 
 void CarController::running(rs2::depth_frame depth_raw) {
