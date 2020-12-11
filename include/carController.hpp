@@ -5,6 +5,8 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <tuple>
+#include <ctime>
+#include <chrono>
 #include "pwmController.hpp"
 #include "measurementPoint.hpp"
 #define GUITEST

@@ -55,6 +55,7 @@ void CarController::run() {
             video.write(dest);
         } catch (rs2::error e) {
             std::cout << e.get_failed_args() << std::endl;
+            std::cout << e.get_failed_function() << std::endl;
             break;
         }
     }
@@ -118,8 +119,11 @@ inline void CarController::drawMeasurementPoints(Mat dest, rs2::depth_frame dept
     const double center_x = FRAME_WIDTH / 2;
     const double center_y = FRAME_HEIGHT / 2;
     const auto text = std::to_string(depth.get_distance((int)center_x, (int)center_y));
+    const auto end = std::chrono::system_clock::now();
+    const auto time = std::chrono::system_clock::to_time_t(end);
 
-    putText(dest, text, Point(0.0, 100.0), FONT_HERSHEY_SIMPLEX , 1.0, Scalar(0, 0, 255), 5, LINE_AA);
+    putText(dest, text, Point(200, 70.0), FONT_HERSHEY_SIMPLEX , 0.5, Scalar(0, 0, 255), 2, LINE_AA);
+    putText(dest, std::ctime(&time), Point(0.0, 20.0) ,FONT_HERSHEY_SIMPLEX , 0.5, Scalar(0, 0, 255), 2, LINE_AA);
     std::string stateStr = ""; 
     switch (this->state) {
         case State::RUNNING:
