@@ -11,6 +11,11 @@ MeasurementPoint::MeasurementPoint(int frameWidth, int frameHeight) {
     left.push_back(cv::Point(frameWidth / 7.0, center_y));
     left.push_back(cv::Point(frameWidth / 7.0, center_y + 30));
     left.push_back(cv::Point(frameWidth / 7.0, center_y + 60));
+    left.push_back(cv::Point(frameWidth / 7.0 - 30, center_y - 60));
+    left.push_back(cv::Point(frameWidth / 7.0 - 30, center_y - 30));
+    left.push_back(cv::Point(frameWidth / 7.0 - 30, center_y));
+    left.push_back(cv::Point(frameWidth / 7.0 - 30, center_y + 30));
+    left.push_back(cv::Point(frameWidth / 7.0 - 30, center_y + 60));
 
     //Right side wall
     right.push_back(cv::Point(frameWidth / 7.0 * 6.0, center_y - 60));
@@ -18,6 +23,11 @@ MeasurementPoint::MeasurementPoint(int frameWidth, int frameHeight) {
     right.push_back(cv::Point(frameWidth / 7.0 * 6.0, center_y));
     right.push_back(cv::Point(frameWidth / 7.0 * 6.0, center_y + 30));
     right.push_back(cv::Point(frameWidth / 7.0 * 6.0, center_y + 60));
+    right.push_back(cv::Point(frameWidth / 7.0 * 6.0 + 30 , center_y - 60));
+    right.push_back(cv::Point(frameWidth / 7.0 * 6.0 + 30 , center_y - 30));
+    right.push_back(cv::Point(frameWidth / 7.0 * 6.0 + 30 , center_y));
+    right.push_back(cv::Point(frameWidth / 7.0 * 6.0 + 30 , center_y + 30));
+    right.push_back(cv::Point(frameWidth / 7.0 * 6.0 + 30 , center_y + 60));
 
     //Center
     center.push_back(cv::Point(center_x - 30, center_y - 30));
