@@ -36,7 +36,7 @@ class CarController {
         void run();
     private:
         void running(rs2::depth_frame depth_raw);
-        void tracking(cv::Mat dest, std::vector<cv::KeyPoint> inputKey, std::vector<std::vector<cv::DMatch>> matches);
+        void tracking(cv::Mat color_image, cv::Mat dest);
         std::pair<cv::Mat, cv::Mat> getColorAndDepthFrame();
         std::pair<std::vector<cv::KeyPoint>, std::vector<std::vector<cv::DMatch>>> detectFeatures(cv::Mat color_image) ;
         void drawMeasurementPoints(cv::Mat dest, rs2::depth_frame depth);

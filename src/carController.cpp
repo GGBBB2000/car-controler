@@ -32,10 +32,8 @@ void CarController::run() {
             const rs2::frame color = data.get_color_frame();
             const Mat color_image(Size(FRAME_WIDTH, FRAME_HEIGHT), CV_8UC3, (void*)color.get_data(), Mat::AUTO_STEP);
             const Mat depth_image(Size(FRAME_WIDTH, FRAME_HEIGHT), CV_8UC3, (void*)depth.get_data(), Mat::AUTO_STEP);
+            std::cout << color.get_data_size() << std::endl;
 
-            const auto result = detectFeatures(color_image);
-            const std::vector<KeyPoint> inputKey = result.first;
-            const std::vector<std::vector<DMatch>> matches = result.second;
 
             Mat dest = depth_image;
             switch (state) {
@@ -44,7 +42,7 @@ void CarController::run() {
                     running(depth_raw);
                     break;
                 case State::TRACKING:
-                    tracking(dest, inputKey, matches);
+                    tracking(color_image, dest);
                     break;
             }
             drawMeasurementPoints(dest, depth_raw);
@@ -92,7 +90,11 @@ void CarController::running(rs2::depth_frame depth_raw) {
 }
 
 using namespace cv;
-void CarController::tracking(Mat dest, std::vector<KeyPoint> inputKey, std::vector<std::vector<DMatch>> matches) {
+void CarController::tracking(Mat color_image, Mat dest) {
+    const auto result = detectFeatures(color_image);
+    const std::vector<KeyPoint> inputKey = result.first;
+    const std::vector<std::vector<DMatch>> matches = result.second;
+
     if (matches.size() > 5) {
         float gravity_x = 0.0;
         float gravity_y = 0.0;
