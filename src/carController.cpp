@@ -11,6 +11,7 @@ CarController::CarController() {
 void CarController::run() {
     const int fourcc = cv::VideoWriter::fourcc('m','p','4', 'v');
     auto video = cv::VideoWriter("video.mp4", fourcc, this->FPS, cv::Size(this->FRAME_WIDTH,this->FRAME_HEIGHT));
+    auto color_video = cv::VideoWriter("colorvideo.mp4", fourcc, this->FPS, cv::Size(this->FRAME_WIDTH,this->FRAME_HEIGHT));
     rs2::colorizer color_map;
     rs2::pipeline pipe;
 
@@ -50,6 +51,7 @@ void CarController::run() {
             //drawMatches(this->target, this->targetKey, color_image, inputKey, matches, dest);
             imshow(window_name, dest);
 #endif
+            color_video.write(color_image);
             video.write(dest);
         } catch (rs2::error e) {
             std::cout << e.get_failed_args() << std::endl;
@@ -69,19 +71,19 @@ void CarController::running(rs2::depth_frame depth_raw) {
     } else if (!left && center && right) {
         state = State::RUNNING;
         steer.setScale(-1);
-        throttle.setDutyCycle(35);
+        throttle.setDutyCycle(40);
     } else if (left && center && !right) {
         state = State::RUNNING;
         steer.setScale(1);
-        throttle.setDutyCycle(35);
+        throttle.setDutyCycle(40);
     } else if (!left && !center && right) {
         state = State::RUNNING;
         steer.setScale(-0.5);
-        throttle.setDutyCycle(35);
+        throttle.setDutyCycle(40);
     } else if (left && !center && !right) {
         state = State::RUNNING;
         steer.setScale(0.5);
-        throttle.setDutyCycle(35);
+        throttle.setDutyCycle(40);
     } else {
         state = State::RUNNING;
         steer.setScale(-0.3);
