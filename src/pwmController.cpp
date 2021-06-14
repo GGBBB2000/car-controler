@@ -1,41 +1,53 @@
 #include "../include/pwmController.hpp"
 
-using namespace PWM;
-void PwmController::setDutyCycle(double cycle){}
-void PwmController::setScale(double scale) {}
-
 Steer::Steer() {
-    std::cout << "PWM Steer PIN: " << PWM_PIN << std::endl;
-    GPIO::setmode(GPIO::BOARD);
-    GPIO::setup(PWM_PIN, GPIO::OUT, GPIO::LOW);
-    pwm = new GPIO::PWM(PWM_PIN, 50);
-    pwm->start(PWM_PIN);
-    setScale(0);
+   setScale(0);
 }
 
-void Steer::setScale(double scale){
-    // scale (-1 -> 1) to duty (9 -> 5)
-    if (scale > 1) { scale = 1; }
-    else if (scale < -1) { scale = -1; }
-    double duty = -scale * 2 + 7;
-    setDutyCycle(duty);
+void Steer::setScale(double scale) {
+    try {
+        this->sendRequest(scale).wait();
+    } catch (const std::exception& e) {
+        std::cout << "Steer send request failed" << std::endl;
+    }
 }
-void Steer::setDutyCycle(double cycle){
-    std::cout << "PMW Steer PWM: " << cycle << std::endl;
-    pwm->ChangeDutyCycle(cycle);
+
+pplx::task<void> Steer::sendRequest(double scale) {
+    return pplx::create_task([s = scale] {
+                std::string url = "http://localhost:1065/steer/";
+                url += std::to_string(s);
+                url += "/";
+                http_client client(url);
+                return client.request(methods::GET);
+            })
+    .then([](http_response response){
+            if (response.status_code() == status_codes::OK) {
+            }
+            });
 }
 
 Throttle::Throttle() {
-    std::cout << "PWM Throttle PIN: " << PWM_PIN << std::endl;
-    GPIO::setmode(GPIO::BOARD);
-    GPIO::setup(PWM_PIN, GPIO::OUT, GPIO::LOW);
-    pwm = new GPIO::PWM(PWM_PIN, 50);
-    pwm->start(PWM_PIN);
-    setDutyCycle(0);
 }
 
-void Throttle::setScale(double scale){}
-void Throttle::setDutyCycle(double cycle){
-    std::cout << "PMW Throttle PWM: " << cycle << std::endl;
-    pwm->ChangeDutyCycle(cycle);
+void Throttle::setScale(double scale) {
+    try {
+        this->sendRequest(scale).wait();
+    } catch (const std::exception& e) {
+        std::cout << "exception" << std::endl;
+    }
+}
+
+pplx::task<void> Throttle::sendRequest(double scale) {
+    return pplx::create_task([s = scale] {
+                std::string url = "http://localhost:1065/throttle/";
+                url += std::to_string(s);
+                url += "/";
+                std::cout << url << std::endl;
+                http_client client(url);
+                return client.request(methods::GET);
+            })
+    .then([](http_response response){
+            if (response.status_code() == status_codes::OK) {
+            }
+            });
 }

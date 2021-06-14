@@ -1,39 +1,32 @@
 #ifndef INCLUDE_PWM_CONTROLLER
 #define INCLUDE_PWM_CONTROLLER
-#include <JetsonGPIO.h>
 #include <memory>
 #include <iostream>
+#include <cpprest/http_client.h>
+#include <string>
 #endif // INCLUDE_PWM_CONTROLER
 
-namespace PWM {
-    class PwmController {
-        public:
-            virtual void setScale(double scale);
+using namespace utility;
+using namespace web;
+using namespace web::http;
+using namespace web::http::client;
+using namespace concurrency::streams;
 
-        private:
-            virtual void setDutyCycle(double freq);
-    };
+struct PwmController {
+    virtual void setScale(double scale) = 0;
+    virtual pplx::task<void> sendRequest(double scale) = 0;
+};
 
-    class Steer : public PwmController {
-        public:
-            Steer();
-            void setScale(double scale);
-            void setDutyCycle(double freq);
+struct Steer : public PwmController {
+    public:
+        Steer();
+        void setScale(double scale) override;
+        pplx::task<void> sendRequest(double scale) override;
+};
 
-        private:
-            const int PWM_PIN = 33;
-            GPIO::PWM *pwm;
-    };
-
-    class Throttle : public PwmController {
-        public:
-            Throttle();
-            void setScale(double scale);
-            void setDutyCycle(double freq);
-
-        private:
-            const int ENABLE_PIN = 0; //TODO
-            const int PWM_PIN = 32;
-            GPIO::PWM *pwm;
-    };
-}
+struct Throttle : public PwmController {
+    public:
+        Throttle();
+        void setScale(double scale) override;
+        pplx::task<void> sendRequest(double scale) override;
+};

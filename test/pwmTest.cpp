@@ -24,12 +24,14 @@ void steerScalingTest() {
     PWM::Steer *steer = new PWM::Steer();
     for (int i = 0; i < 11; i++) {
         double dutyCycle = i / 10.0;
+        std::cout << "duty:" << dutyCycle << std::endl;
         steer->setScale(dutyCycle);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
     for (int i = 0; i < 11; i++) {
         double dutyCycle = -i / 10.0;
+        std::cout << "duty:" << dutyCycle << std::endl;
         steer->setScale(dutyCycle);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
@@ -41,7 +43,7 @@ void steerScalingTest() {
 void throttleTest() {
     std::cout << "ThrottleTest:begin..." << std::endl;
     PWM::Throttle *throttle = new PWM::Throttle();
-    for (int i = 0; i < 30; i++) {
+    for (int i = 0; i < 40; i++) {
         double dutyCycle = i;
         throttle->setDutyCycle(dutyCycle);
         std::cout << "duty cycle: " << dutyCycle << std::endl;

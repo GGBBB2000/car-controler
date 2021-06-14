@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CAR_CONTROLLER
-#define INCLUDE_CAR_CONTROLLER
+#ifndef INCLUDE_CAR_MODEL
+#define INCLUDE_CAR_MODEL
 #include <librealsense2/rs.hpp>
 #include <iostream>
 #include <opencv2/opencv.hpp>
@@ -7,32 +7,26 @@
 #include <tuple>
 #include <ctime>
 #include <chrono>
-#include "pwmController.hpp"
 #include "measurementPoint.hpp"
-#define GUITEST
+#include "walls.hpp"
+#include "pwmController.hpp"
+#include "../include/state/state.hpp"
 
-enum State {
-    RUNNING,
-    TRACKING,
-    RETRY,
-    STOP,
-};
-
-class CarController {
+class CarModel {
     const int FRAME_WIDTH = 424;
     const int FRAME_HEIGHT = 240;
     const int FPS = 30;
-    const cv::Mat target = cv::imread("../image.jpg");
     rs2::config config;
+    Steer steer;
+    Throttle throttle;
+    //State state;
     cv::Mat targetDescriptors; 
     std::vector<cv::KeyPoint> targetKey;
-    PWM::Throttle throttle;
-    PWM::Steer steer;
-    State state = State::RUNNING;
     MeasurementPoint points = MeasurementPoint(FRAME_WIDTH, FRAME_HEIGHT);
+    std::map<State, std::shared_ptr<StateInterface<State>>> stateMap;
 
     public:
-        CarController();
+        CarModel();
         void run();
     private:
         void running(rs2::depth_frame depth_raw);
@@ -42,4 +36,4 @@ class CarController {
         void drawMeasurementPoints(cv::Mat dest, rs2::depth_frame depth);
 };
 
-#endif // INCLUDE_CAR_CONTROLER
+#endif // INCLUDE_CAR_MODEL

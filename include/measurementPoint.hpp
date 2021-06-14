@@ -4,6 +4,7 @@
 #include <librealsense2/rs.hpp>
 #include <vector>
 #include <map>
+#include "../include/walls.hpp"
 
 enum Direction {
     LEFT,
@@ -15,10 +16,14 @@ class MeasurementPoint {
 
     public:
         MeasurementPoint(int frameWidth, int frameHeight);
-        void drawPoints(cv::Mat frame, rs2::depth_frame depthFrame);
-        bool detectObjects(Direction dir, rs2::depth_frame depthFrame);
+        void drawPoints(cv::Mat frame);
+        void detectWall(rs2::depth_frame depthFrame);
+        std::vector<Walls> getWallsVector();
+        int checkCenterWall();
     private:
-        std::map<Direction, std::vector<cv::Point>> points;
+        const float DETECT_THRESOLD = 0.5;
+        std::vector<std::map<Direction, std::vector<cv::Point>> > points;
+        std::vector<Walls> wallsVector;
 };
 
 #endif

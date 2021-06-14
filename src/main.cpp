@@ -1,7 +1,7 @@
-#include "../include/carController.hpp"
+#include "../include/carModel.hpp"
 
 int main() {
-    auto controller = new CarController();
-    controller->run();
+    auto model = new CarModel();
+    model->run();
     return 0;
 }
