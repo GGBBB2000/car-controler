@@ -1,6 +1,5 @@
 #ifndef INCLUDE_STATE
 #define INCLUDE_STATE
-#include "/usr/local/cuda/include/cuda_runtime.h"
 #include "stateInterface.hpp"
 #include <iostream>
 #include <librealsense2/rs.hpp>
@@ -36,6 +35,7 @@ class Stop : public StateInterface<State> {
         std::string getName();
         State getNextState();
 };
+
 class Tracking : public StateInterface<State> {
     public:
         Tracking();
@@ -44,11 +44,8 @@ class Tracking : public StateInterface<State> {
         State getNextState();
 
     private:
-        std::vector<cv::cuda::GpuMat> loadTemplates(const std::string templatePath);
         cv::Mat getStream(rs2::pipeline pipe);
         cv::Mat applyImageFilter(const cv::Mat color_image);
-        bool searchTarget(rs2::pipeline pipe);
-        void execTemplateMatching(cv::Mat gauss, std::vector<cv::cuda::GpuMat> targetMatVec);
         MeasurementPoint points = MeasurementPoint(424, 240);
 };
 #endif

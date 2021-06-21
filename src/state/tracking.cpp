@@ -1,6 +1,7 @@
 #include "../../include/state/state.hpp"
 #include "../../include/pwmController.hpp"
 #include <opencv2/aruco.hpp>
+#include <opencv2/gapi/gmat.hpp>
 
 Tracking::Tracking() {
 }
@@ -15,48 +16,6 @@ Tracking::Tracking() {
     auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count(); \
     std::cout << msec << "msec" << std::endl; \
 
-/*
- *
-            // connectedComponentsWithStats
-            //Mat labels, stats, centroids;
-            //int nLabels = connectedComponentsWithStats(gauss, labels, stats, centroids, 8, CV_16UC1);
-
-            //for (int i = 1; i < nLabels; i++) {
-            //    int *param = stats.ptr<int>(i);
-
-            //    int x = param[ConnectedComponentsTypes::CC_STAT_LEFT];
-            //    int y = param[ConnectedComponentsTypes::CC_STAT_TOP];
-            //    int height = param[ConnectedComponentsTypes::CC_STAT_HEIGHT];
-            //    int width = param[ConnectedComponentsTypes::CC_STAT_WIDTH];
-            //    int area = height * width;
-            //    //if (area < 500 || area > 10000) {
-            //    //    rectangle(gauss, Rect(x, y, width, height), Scalar(0, 0, 0), FILLED);
-            //    //}
-            //}
- */
-
-std::vector<cv::cuda::GpuMat> Tracking::loadTemplates(const std::string templatePath = "../light.png") {
-    std::vector<cv::cuda::GpuMat> targetMatVec;
-    const cv::Mat lightTmp = cv::imread(templatePath);
-    double size = 1 / 5.5;
-    int count = 0;
-
-    while (size < 1.5) {
-        {
-            cv::Mat target;
-            std::cout << "loading...:" << count << std::endl;
-            cv::cuda::GpuMat gpuIn, resized, gpuOut;
-            gpuIn.upload(lightTmp);
-            cv::cuda::resize(gpuIn, resized, cv::Size(), size, size);
-            cv::cuda::cvtColor(resized, gpuOut, cv::COLOR_BGR2GRAY);
-            targetMatVec.push_back(gpuOut);
-            size += 0.01;
-        }
-        count++;
-    }
-    return targetMatVec;
-}
-
 //TODO  何かフレーム取得用クラスを作る
 cv::Mat Tracking::getStream(rs2::pipeline pipe) {
     const rs2::frameset data = pipe.wait_for_frames(500); // Wait for next set of frames from the camera
@@ -67,97 +26,33 @@ cv::Mat Tracking::getStream(rs2::pipeline pipe) {
     return color_image;
 }
 
-bool Tracking::searchTarget(rs2::pipeline pipe) {
-    const rs2::frameset data = pipe.wait_for_frames(500); // Wait for next set of frames from the camera
-    const rs2::frame depth = data.get_depth_frame();
-    const rs2::depth_frame depth_raw = data.get_depth_frame();
-    const cv::Mat depth_image(cv::Size(424, 240), CV_8UC3, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
-    return false;
-}
-
-
-cv::Mat Tracking::applyImageFilter(const cv::Mat color_image) {
-    cv::Mat gauss; 
-    {
-        cv::cuda::Stream s;
-        cv::Mat binImage;
-        cv::cuda::GpuMat gpuColorImage, gpuOut;
-        gpuColorImage.upload(color_image);
-        cv::cuda::threshold(gpuColorImage, gpuOut, 254, 255, cv::THRESH_BINARY, s);
-        gpuOut.download(binImage, s);
-        cv::GaussianBlur(binImage, gauss, cv::Size(13, 13), 1.0);
-    }
-    return gauss;
-}
+//bool Tracking::searchTarget(rs2::pipeline pipe) {
+//    const rs2::frameset data = pipe.wait_for_frames(500); // Wait for next set of frames from the camera
+//    const rs2::frame depth = data.get_depth_frame();
+//    const rs2::depth_frame depth_raw = data.get_depth_frame();
+//    const cv::Mat depth_image(cv::Size(424, 240), CV_8UC3, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
+//    return false;
+//}
+//
+//
+//cv::Mat Tracking::applyImageFilter(const cv::Mat color_image) {
+//    cv::Mat gauss; 
+//    {
+//        cv::cuda::Stream s;
+//        cv::Mat binImage;
+//        cv::cuda::GpuMat gpuColorImage, gpuOut;
+//        gpuColorImage.upload(color_image);
+//        cv::cuda::threshold(gpuColorImage, gpuOut, 254, 255, cv::THRESH_BINARY, s);
+//        gpuOut.download(binImage, s);
+//        cv::GaussianBlur(binImage, gauss, cv::Size(13, 13), 1.0);
+//    }
+//    return gauss;
+//}
 
 auto steer = Steer();
-int lastMatchedIndex = 0;
-const size_t windowSize = 5;
-using namespace cv;
-void Tracking::execTemplateMatching(cv::Mat gauss, std::vector<cuda::GpuMat> targetMatVec) {
-    Ptr<cuda::TemplateMatching> ptr = cuda::createTemplateMatching(CV_8U, TM_CCOEFF_NORMED);
-
-    cv::rectangle(gauss, cv::Point(0, 0), cv::Point(targetMatVec[lastMatchedIndex].cols, targetMatVec[lastMatchedIndex].rows), cv::Scalar(255,255,0), 1);
-
-    #pragma omp for
-    for (int i = 0; i < windowSize; i++) {
-        if (lastMatchedIndex + i < targetMatVec.size()) {
-
-            auto target = targetMatVec[lastMatchedIndex + i];
-            cuda::Stream st;
-
-            //Mat templateOut;
-            cuda::GpuMat gpuIn, targetGpu, gpuOut;
-            gpuIn.upload(gauss);
-            ptr->match(gpuIn, target, gpuOut);
-
-            cv::Rect roi_rect(0, 0, target.cols, target.rows);
-            Point max_pt;
-            double maxVal;
-            cuda::minMaxLoc(gpuOut, NULL, &maxVal, NULL, &max_pt);
-
-            if (maxVal > 0.6) {
-                //std::cout << max_pt.x << " " << max_pt.y <<  "\n";
-                roi_rect.x = max_pt.x;
-                roi_rect.y = max_pt.y;
-                //std::cout << roi_rect.width << " " << roi_rect.height << std::endl;
-                //std::cout << maxVal << "\n"; 
-
-                #pragma omp critical
-                {
-                    rectangle(gauss, roi_rect, Scalar(255,0,0), 3);
-                    if (lastMatchedIndex < i + lastMatchedIndex) {
-                        //Steer Controll
-                        const int flameWidth = gauss.cols;
-                        const int centerX = flameWidth / 2; 
-                        if (max_pt.x < centerX) { // ターゲットが画面左側の時
-                            const int diff = (centerX - max_pt.x);
-                            const double steerVal = diff / (flameWidth / 2.0);
-                            const double coef = 5.0;
-                            //steer.setScale(-steerVal * coef);
-                            //std::cout << -steerVal * coef << "\n";
-                        } else {
-                            const int diff = (max_pt.x - centerX);
-                            const double steerVal = diff / (flameWidth / 2.0);
-                            const double coef = 3.0;
-                            //steer.setScale(steerVal * coef);
-                            //std::cout << steerVal * coef << "\n";
-                        }
-
-                        std::cout << 1 / 5.5 + (lastMatchedIndex / 100.0) << "\n";
-                        //Steer Controll
-
-                        lastMatchedIndex = i + lastMatchedIndex;
-                    }
-                }
-            }
-        }
-    }
-}
 
 void Tracking::doAction() {
-    std::vector<cv::cuda::GpuMat> targetMatVec = this->loadTemplates();
-
+    //std::vector<cv::cuda::GpuMat> targetMatVec = this->loadTemplates();
     rs2::pipeline pipe;
     rs2::config config;
     config.enable_stream(RS2_STREAM_INFRARED, 1, 424, 240, RS2_FORMAT_Y8, 30);
