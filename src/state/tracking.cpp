@@ -19,53 +19,26 @@ Tracking::Tracking() {
 //TODO  何かフレーム取得用クラスを作る
 cv::Mat Tracking::getStream(rs2::pipeline pipe) {
     const rs2::frameset data = pipe.wait_for_frames(500); // Wait for next set of frames from the camera
-    //iconst rs2::frame infrared = data.get_infrared_frame();
-    //const cv::Mat color_image(cv::Size(424, 240), CV_8UC1, (void*)infrared.get_data(), cv::Mat::AUTO_STEP);
     const rs2::frame color = data.get_color_frame();
-    const cv::Mat color_image(cv::Size(424, 240), CV_8UC3, (void*)color.get_data(), cv::Mat::AUTO_STEP);
+    const cv::Mat color_image(cv::Size(640, 480), CV_8UC3, (void*)color.get_data(), cv::Mat::AUTO_STEP);
     return color_image;
 }
 
-//bool Tracking::searchTarget(rs2::pipeline pipe) {
-//    const rs2::frameset data = pipe.wait_for_frames(500); // Wait for next set of frames from the camera
-//    const rs2::frame depth = data.get_depth_frame();
-//    const rs2::depth_frame depth_raw = data.get_depth_frame();
-//    const cv::Mat depth_image(cv::Size(424, 240), CV_8UC3, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
-//    return false;
-//}
-//
-//
-//cv::Mat Tracking::applyImageFilter(const cv::Mat color_image) {
-//    cv::Mat gauss; 
-//    {
-//        cv::cuda::Stream s;
-//        cv::Mat binImage;
-//        cv::cuda::GpuMat gpuColorImage, gpuOut;
-//        gpuColorImage.upload(color_image);
-//        cv::cuda::threshold(gpuColorImage, gpuOut, 254, 255, cv::THRESH_BINARY, s);
-//        gpuOut.download(binImage, s);
-//        cv::GaussianBlur(binImage, gauss, cv::Size(13, 13), 1.0);
-//    }
-//    return gauss;
-//}
 
 auto steer = Steer();
 
 void Tracking::doAction() {
-    //std::vector<cv::cuda::GpuMat> targetMatVec = this->loadTemplates();
     rs2::pipeline pipe;
     rs2::config config;
-    config.enable_stream(RS2_STREAM_INFRARED, 1, 424, 240, RS2_FORMAT_Y8, 30);
-    config.enable_stream(RS2_STREAM_DEPTH, 424, 240, RS2_FORMAT_Z16, 30);
-    config.enable_stream(RS2_STREAM_COLOR, 424, 240, RS2_FORMAT_BGR8, 30);
+    config.enable_stream(RS2_STREAM_DEPTH, 640, 480, RS2_FORMAT_Z16, 30);
+    config.enable_stream(RS2_STREAM_COLOR, 640, 480, RS2_FORMAT_BGR8, 30);
     //config.enable_stream(RS2_STREAM_INFRARED, 1, 640, 480, RS2_FORMAT_Y8, 30);
     pipe.start(config);
 
     using namespace cv;
     const int fourcc = VideoWriter::fourcc('m','p','4', 'v');
-    auto bin = VideoWriter("bin.mp4", fourcc, 30, Size(424, 240), false);
-    auto processed = VideoWriter("process.mp4", fourcc, 30, Size(424, 240), false);
-    //namedWindow("hoge", WINDOW_AUTOSIZE);
+    auto bin = VideoWriter("bin.mp4", fourcc, 30, Size(640, 480), false);
+    auto processed = VideoWriter("process.mp4", fourcc, 30, Size(640, 480), false);
     auto start = std::chrono::system_clock::now();
 
     Mat markerImage;
@@ -73,8 +46,6 @@ void Tracking::doAction() {
     std::vector<std::vector<Point2f>> markerCorners, rejected;
     Ptr<aruco::DetectorParameters> parameters;
     auto dictionary = aruco::getPredefinedDictionary(aruco::DICT_6X6_250);
-    //aruco::drawMarker(dictionary, 24, 200, markerImage, 1);
-    //imshow("marker", markerImage);
 
     auto count = 0;
     try {
@@ -82,7 +53,9 @@ void Tracking::doAction() {
         //while (true) {
             const Mat color_image = this->getStream(pipe);
             Mat out;
+	    color_image.copyTo(out);
             aruco::detectMarkers(color_image, dictionary, markerCorners, markerIds);
+
             if (markerIds.size() > 0) {
                 aruco::drawDetectedMarkers(out, markerCorners, markerIds);
                 imshow("hoge", out);
@@ -90,14 +63,6 @@ void Tracking::doAction() {
                 imshow("hoge", color_image);
             }
             std::cout << markerIds.size() << std::endl;
-            //this->searchTarget(pipe);
-            //cv::Mat gauss = this->applyImageFilter(color_image);
-
-            //this->execTemplateMatching(gauss, targetMatVec);
-            //bin.write(gauss);
-            //if (lastMatchedIndex > targetMatVec.size() - 5) {
-            //    break;
-            //}
 
             // fps calc
             count++;
@@ -123,6 +88,7 @@ void Tracking::doAction() {
 std::string Tracking::getName() {
     return "TRACKING";
 }
+
 State Tracking::getNextState() {
     return State::STOP;
 }
