@@ -10,7 +10,8 @@
 #include "measurementPoint.hpp"
 #include "walls.hpp"
 #include "pwmController.hpp"
-#include "../include/state/state.hpp"
+#include "state/state.hpp"
+#include "streamManager.hpp"
 
 class CarModel {
     const int FRAME_WIDTH = 424;

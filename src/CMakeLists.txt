@@ -5,6 +5,7 @@ add_library(SRC SHARED
     pwmController.cpp
     measurementPoint.cpp
     walls.cpp
+    streamManager.cpp
     )
 target_include_directories(SRC
     PUBLIC ${PROJECT_SOURCE_DIR}/include

@@ -10,6 +10,7 @@
 #include <ctime>
 #include <chrono>
 #include "../measurementPoint.hpp"
+#include "../streamManager.hpp"
 //#include "walls.hpp"
 //#include "pwmController.hpp"
 
@@ -22,7 +23,7 @@ enum State {
 
 class Run : public StateInterface<State> {
     public:
-        Run();
+        Run(std::shared_ptr<StreamManager> st);
         void doAction();
         std::string getName();
         State getNextState();
@@ -30,7 +31,7 @@ class Run : public StateInterface<State> {
 
 class Stop : public StateInterface<State> {
     public:
-        Stop();
+        Stop(std::shared_ptr<StreamManager> st);
         void doAction();
         std::string getName();
         State getNextState();
@@ -38,14 +39,12 @@ class Stop : public StateInterface<State> {
 
 class Tracking : public StateInterface<State> {
     public:
-        Tracking();
+        Tracking(std::shared_ptr<StreamManager> st);
         void doAction();
         std::string getName();
         State getNextState();
 
     private:
-        cv::Mat getStream(rs2::pipeline pipe);
-        cv::Mat applyImageFilter(const cv::Mat color_image);
         MeasurementPoint points = MeasurementPoint(424, 240);
 };
 #endif

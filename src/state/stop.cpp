@@ -1,6 +1,7 @@
 #include "../../include/state/state.hpp"
 
-Stop::Stop() {
+Stop::Stop(std::shared_ptr<StreamManager> st) {
+    this->streamManager = st;
 }
 
 void Stop::doAction() {

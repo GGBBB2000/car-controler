@@ -2,13 +2,10 @@
 
 CarModel::CarModel() {
     std::cout << "Using librealsense - " << RS2_API_VERSION_STR << std::endl;
-    stateMap.insert(std::make_pair(State::RUNNING, std::make_shared<Run>()));
-    stateMap.insert(std::make_pair(State::STOP, std::make_shared<Stop>()));
-    stateMap.insert(std::make_pair(State::TRACKING, std::make_shared<Tracking>()));
-    //this->config.enable_stream(RS2_STREAM_DEPTH, this->FRAME_WIDTH, this->FRAME_HEIGHT, RS2_FORMAT_Z16, FPS);
-    //this->config.enable_stream(RS2_STREAM_COLOR, this->FRAME_WIDTH, this->FRAME_HEIGHT, RS2_FORMAT_BGR8, FPS);
-    //const cv::Ptr<cv::Feature2D> feature = cv::ORB::create();
-    //feature->detectAndCompute(this->target, cv::noArray(), this->targetKey, this->targetDescriptors);
+    std::shared_ptr<StreamManager> stPtr = std::make_shared<StreamManager>();
+    stateMap.insert(std::make_pair(State::RUNNING, std::make_shared<Run>(stPtr)));
+    stateMap.insert(std::make_pair(State::STOP, std::make_shared<Stop>(stPtr)));
+    stateMap.insert(std::make_pair(State::TRACKING, std::make_shared<Tracking>(stPtr)));
 }
 
 void CarModel::run() {
@@ -20,6 +17,7 @@ void CarModel::run() {
         std::cout << state->getName() << std::endl;
         nextState = state->getNextState();
     }
+
 
     //const int fourcc = cv::VideoWriter::fourcc('m','p','4', 'v');
     //auto video = cv::VideoWriter("video.mp4", fourcc, this->FPS, cv::Size(this->FRAME_WIDTH,this->FRAME_HEIGHT));
