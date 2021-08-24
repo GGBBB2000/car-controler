@@ -26,9 +26,12 @@ void Run::doAction() {
 	    const rs2::frame color_frame = frames.get_color_frame();
 	    const rs2::frame depth_frame = frames.get_depth_frame().apply_filter(color_map);
 	    const rs2::frame depth_raw = frames.get_depth_frame();
-	    const auto mesurementPoint = MeasurementPoint();
+	    auto mesurementPoint = MeasurementPoint();
 	    Mat color_image(Size(FRAME_WIDTH, FRAME_HEIGHT), CV_8UC3, (void*)color_frame.get_data(), Mat::AUTO_STEP);
 	    Mat depth_image(Size(FRAME_WIDTH, FRAME_HEIGHT), CV_8UC3, (void*)depth_frame.get_data(), Mat::AUTO_STEP);
+
+	    mesurementPoint.detectWall(depth_raw);
+	    mesurementPoint.drawPoints(depth_image);
 
 	    imshow("", depth_image);
 	}
