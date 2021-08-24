@@ -12,11 +12,9 @@
 #include "../measurementPoint.hpp"
 #include "../streamManager.hpp"
 //#include "walls.hpp"
-//#include "pwmController.hpp"
 
 enum State {
-    RUNNING,
-    TRACKING,
+    RUNNING, TRACKING,
     RETRY,
     STOP,
 };
@@ -45,6 +43,6 @@ class Tracking : public StateInterface<State> {
         State getNextState();
 
     private:
-        MeasurementPoint points = MeasurementPoint(424, 240);
+	bool steerControll(rs2::depth_frame depth_frame, cv::Mat color_image);
 };
 #endif

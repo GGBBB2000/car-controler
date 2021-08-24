@@ -15,7 +15,7 @@ enum Direction {
 class MeasurementPoint {
 
     public:
-        MeasurementPoint(int frameWidth, int frameHeight);
+        MeasurementPoint();
         void drawPoints(cv::Mat frame);
         void detectWall(rs2::depth_frame depthFrame);
         std::vector<Walls> getWallsVector();

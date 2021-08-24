@@ -1,6 +1,6 @@
 #include "../include/measurementPoint.hpp"
 
-MeasurementPoint::MeasurementPoint(int frameWidth, int frameHeight) {
+MeasurementPoint::MeasurementPoint() {
     for (int i = 0; i < 2; i++) {
         std::map<Direction, std::vector<cv::Point>> map;
         points.push_back(map);
