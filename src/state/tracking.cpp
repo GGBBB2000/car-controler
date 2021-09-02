@@ -21,10 +21,10 @@ std::vector<int> markerIds;
 std::vector<std::vector<cv::Point2f>> markerCorners, rejected;
 cv::Ptr<cv::aruco::DetectorParameters> parameters;
 auto dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
-Steer steer;
-Throttle throttle;
 
 bool Tracking::steerControll(rs2::depth_frame depth_frame, cv::Mat color_image) {
+    Steer steer;
+    Throttle throttle;
     using namespace cv;
     aruco::detectMarkers(color_image, dictionary, markerCorners, markerIds);
 

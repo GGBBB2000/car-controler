@@ -14,9 +14,19 @@
 //#include "walls.hpp"
 
 enum State {
-    RUNNING, TRACKING,
+    INIT,
+    RUNNING, 
+    TRACKING,
     RETRY,
     STOP,
+};
+
+class Init: public StateInterface<State> {
+    public:
+        Init(std::shared_ptr<StreamManager> st);
+        void doAction();
+        std::string getName();
+        State getNextState();
 };
 
 class Run : public StateInterface<State> {

@@ -21,7 +21,7 @@ class MeasurementPoint {
         std::vector<Walls> getWallsVector();
         int checkCenterWall();
     private:
-        const float DETECT_THRESOLD = 0.5;
+        const float DETECT_THRESOLD = 0.7;
         std::vector<std::map<Direction, std::vector<cv::Point>> > points;
         std::vector<Walls> wallsVector;
 };

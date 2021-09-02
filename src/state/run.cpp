@@ -7,6 +7,9 @@ Run::Run(std::shared_ptr<StreamManager> st) {
 
 
 void Run::doAction() {
+    Steer steer;
+    Throttle throttle;
+
     const int FRAME_WIDTH = 848;
     const int FRAME_HEIGHT = 480;
 
@@ -29,11 +32,32 @@ void Run::doAction() {
 	    auto mesurementPoint = MeasurementPoint();
 	    Mat color_image(Size(FRAME_WIDTH, FRAME_HEIGHT), CV_8UC3, (void*)color_frame.get_data(), Mat::AUTO_STEP);
 	    Mat depth_image(Size(FRAME_WIDTH, FRAME_HEIGHT), CV_8UC3, (void*)depth_frame.get_data(), Mat::AUTO_STEP);
+	    
+	    throttle.setScale(0.8);
 
 	    mesurementPoint.detectWall(depth_raw);
-	    mesurementPoint.drawPoints(depth_image);
+	    const auto walls = mesurementPoint.getWallsVector();
 
-	    imshow("", depth_image);
+	    auto centerAvg = 0.0;
+	    {
+		auto centerSum = 0;
+		for (auto wall: walls) {
+		    centerSum += wall.getCenterX();
+		}
+		centerAvg = centerSum / (double)walls.size();
+	    }
+	    const double scale = (centerAvg -  FRAME_WIDTH / 2.0) / (double)(FRAME_WIDTH / 2.0) * 5.0;
+	    std::cout << scale << std::endl;
+	    steer.setScale(scale);
+	    if (mesurementPoint.checkCenterWall() > 30) {
+		throttle.setScale(0.0);
+		steer.setScale(0.0);
+		break;
+	    }
+
+	    mesurementPoint.drawPoints(color_image);
+
+	    imshow("", color_image);
 	}
     } catch (rs2::error e) {
         std::cout << e.get_failed_args() << std::endl;

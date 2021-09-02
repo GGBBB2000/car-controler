@@ -1,7 +1,7 @@
 #include "../include/measurementPoint.hpp"
 
 MeasurementPoint::MeasurementPoint() {
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         std::map<Direction, std::vector<cv::Point>> map;
         points.push_back(map);
     }
@@ -13,7 +13,7 @@ void MeasurementPoint::drawPoints(cv::Mat frame) {
     const Scalar WHITE = Scalar(255, 255, 255);
     const Scalar PURPLE = Scalar(255, 0, 255);
 
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         const auto left = points[i][Direction::LEFT];
         const auto right = points[i][Direction::RIGHT];
         std::string layerString = std::to_string(i);
@@ -42,7 +42,7 @@ void MeasurementPoint::detectWall(rs2::depth_frame depthFrame){
     const int heightEnd = height * 2 / 3;
     std::vector<Walls> tmpWallsVec;
 
-    for (int layer = 0; layer < 2; layer++) { 
+    for (int layer = 0; layer < 3; layer++) { 
         auto right = std::vector<cv::Point>();
         auto left = std::vector<cv::Point>();
         const float detectThreSold = this->DETECT_THRESOLD + layer / 10.0;
@@ -97,9 +97,9 @@ void MeasurementPoint::detectWall(rs2::depth_frame depthFrame){
 
     auto center = std::vector<cv::Point>();
     //center
-    for (int y_i = -1 ; y_i < 2; y_i++) {
+    for (int y_i = -2 ; y_i < 4; y_i++) {
         int y = height / 2 + y_i * 30;
-        for (int x_i = -1; x_i < 2; x_i++) {
+        for (int x_i = -2; x_i < 4; x_i++) {
             int x = width / 2 + x_i * 30;
             auto distance = depthFrame.get_distance(x, y);
             if (distance <= this->DETECT_THRESOLD) {
