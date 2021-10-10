@@ -16,13 +16,11 @@ Tracking::Tracking(std::shared_ptr<StreamManager> st) {
     auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count(); \
     std::cout << msec << "msec" << std::endl; \
 
-cv::Mat markerImage;
-std::vector<int> markerIds;
-std::vector<std::vector<cv::Point2f>> markerCorners, rejected;
-cv::Ptr<cv::aruco::DetectorParameters> parameters;
-auto dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
 
 bool Tracking::steerControll(rs2::depth_frame depth_frame, cv::Mat color_image) {
+    std::vector<int> markerIds;
+    std::vector<std::vector<cv::Point2f>> markerCorners;
+    const auto dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
     Steer steer;
     Throttle throttle;
     using namespace cv;
@@ -43,26 +41,43 @@ bool Tracking::steerControll(rs2::depth_frame depth_frame, cv::Mat color_image) 
 	const double markerCenterX = xSum / 4.0;
 	const double markerCenterY = ySum / 4.0;
 	const double distance = depth_frame.get_distance(markerCenterX, markerCenterY);
-	const double steerScaleRate = 3.0;
+	if (distance <= 0.0) {
+	    return false;
+	}
+	//const double steerScaleRate = 4.0;
 	const double realToVirtualScale = (rightPoint3D.x - leftPoint3D.x) / 0.10; // 0.15 marker no ookisa
-	const double alpha = 1.0 * (rightPoint3D.z - leftPoint3D.z) * realToVirtualScale; // 3.0 tomarubasho
-	const double xp = markerCenterX + alpha;
-	const double yp = ((rightPoint2D.y - leftPoint2D.y) / (rightPoint2D.x - leftPoint2D.x)) * (xp - rightPoint2D.x) + rightPoint2D.y;
+	//const double alpha = (rightPoint3D.z - leftPoint3D.z) * realToVirtualScale; // 3.0 tomarubasho
+	//const double xp = markerCenterX + alpha;
+	const double x2 = rightPoint2D.x;
+	const double x1 = leftPoint2D.x;
+	const double y2 = rightPoint2D.y;
+	const double y1 = leftPoint2D.y;
+	const double z2 = rightPoint3D.z;
+	const double z1 = leftPoint3D.z;
+	const double a = markerCenterX;
+	const double b = markerCenterY;
+	const double h = x2 - x1;
+	const double l = y2 - y1;
+	const double d = 0.15;
+	const double scaledD = d * realToVirtualScale * 10000;
+	const bool pIsOnLeft = (z2 - z1) / (x2 - x1) < 0;
+	const double tmp = sqrt((l * l * d * d) / (l * l + d * d));
+	const double xp = ((pIsOnLeft) ? -1.0 : 1.0) * tmp  + a;
+	std::cout << "xp " << xp << std::endl;
+	const double yp = markerCenterY; //((rightPoint2D.y - leftPoint2D.y) / (rightPoint2D.x - leftPoint2D.x)) * (xp - rightPoint2D.x) + rightPoint2D.y;
 	double steerScale = 0;
 	
-	if (abs(xp - markerCenterX) < 30) {
-	    steerScale = markerCenterX / (double)color_image.cols * (steerScaleRate * 2.0) - steerScaleRate;
-	} else {
-	    steerScale = xp / (double)color_image.cols * (steerScaleRate * 2.0) - steerScaleRate;
-	}
+	//if (abs(xp - markerCenterX) < 30) {
+	    //steerScale = (markerCenterX  - (color_image.cols / 2.0)) / (double) color_image.cols;
+	//} else {
+	    steerScale = (xp - (color_image.cols / 2.0)) / ((double)color_image.cols / 2.0);
+	//}
 
-	//const double indicatorX = markerCenterX / (double)color_image.cols * 400;
-
-	if (distance < 0.15) {
+	if (distance < d) {
 	    throttle.setScale(0);
 	    return true;
 	}
-	steer.setScale(steerScale);
+	steer.setScale(steerScale * 2.0);
 
 	circle(color_image, Point(xSum / 4, ySum / 4), 10, Scalar(0, 0, 255), FILLED);
 	putText(color_image, "C", Point(xSum / 4 - 20, ySum / 4 - 20), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255), 4);
@@ -88,6 +103,8 @@ const int FRAME_HEIGHT = 480;
 void Tracking::doAction() {
     using namespace cv;
     auto start = std::chrono::system_clock::now();
+    Throttle throttle;
+    throttle.setScale(0.5);
 
     rs2::config config;
     config.enable_stream(RS2_STREAM_COLOR, FRAME_WIDTH, FRAME_HEIGHT, RS2_FORMAT_BGR8, 30);
@@ -110,6 +127,7 @@ void Tracking::doAction() {
 
 	    const bool isArrived = this->steerControll(depth_raw, color_image); 
 	    if (isArrived) {
+		throttle.setScale(0.0);
 	        break;
 	    }
 
@@ -130,7 +148,7 @@ void Tracking::doAction() {
 		color_image,
 		depth_image
 	    };
-	    Mat out = depth_image;
+	    Mat out = color_image;
 	    //hconcat(arr, 2, out);
 	    imshow("result", out);
         }
@@ -139,6 +157,7 @@ void Tracking::doAction() {
         std::cout << e.get_failed_function() << std::endl;
     } 
     pipe.stop();
+    throttle.setScale(0);
 }
 
 std::string Tracking::getName() {

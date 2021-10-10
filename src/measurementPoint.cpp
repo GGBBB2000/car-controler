@@ -13,7 +13,7 @@ void MeasurementPoint::drawPoints(cv::Mat frame) {
     const Scalar WHITE = Scalar(255, 255, 255);
     const Scalar PURPLE = Scalar(255, 0, 255);
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 1; i < 2; i++) {
         const auto left = points[i][Direction::LEFT];
         const auto right = points[i][Direction::RIGHT];
         std::string layerString = std::to_string(i);

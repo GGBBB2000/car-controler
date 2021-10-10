@@ -35,6 +35,9 @@ class Run : public StateInterface<State> {
         void doAction();
         std::string getName();
         State getNextState();
+    private:
+	void rotate();
+	bool isDetectingMarker = false;
 };
 
 class Stop : public StateInterface<State> {
